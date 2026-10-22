@@ -1,0 +1,85 @@
+// prisma/schema.prisma
+// Prisma 7: la URL de conexión vive en prisma.config.ts, no aquí.
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Una votación. Hoy hay una sola, pero el modelo permite varias a futuro.
+model Poll {
+  id        String   @id @default(cuid())
+  name      String
+  isOpen    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  gifts  Gift[]
+  voters Voter[]
+}
+
+model Gift {
+  id          String   @id @default(cuid())
+  pollId      String
+  name        String
+  description String?
+  price       Decimal? @db.Decimal(10, 2) // solo visible en el admin
+  link        String? // dónde comprarlo (opcional)
+  isActive    Boolean  @default(true)
+  position    Int      @default(0) // orden en la página de votación
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  poll   Poll        @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  images GiftImage[]
+  votes  Vote[]
+
+  @@index([pollId, position])
+}
+
+model GiftImage {
+  id          String   @id @default(cuid())
+  giftId      String
+  r2Key       String   @unique // ej: gifts/<giftId>/<uuid>.jpg
+  contentType String   @default("image/webp")
+  width       Int?
+  height      Int?
+  position    Int      @default(0) // orden en el carrusel
+  createdAt   DateTime @default(now())
+
+  gift Gift @relation(fields: [giftId], references: [id], onDelete: Cascade)
+
+  @@index([giftId, position])
+}
+
+model Voter {
+  id        String   @id @default(cuid())
+  pollId    String
+  token     String   @unique // va en el link /i/<token> y en la cookie
+  name      String? // etiqueta opcional para el admin
+  createdAt DateTime @default(now())
+
+  poll  Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes Vote[]
+
+  @@index([pollId])
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  giftId    String
+  voterId   String
+  stars     Int // 1..5 (validado en código)
+  comment   String? // comentario opcional
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  gift  Gift  @relation(fields: [giftId], references: [id], onDelete: Cascade)
+  voter Voter @relation(fields: [voterId], references: [id], onDelete: Cascade)
+
+  @@unique([giftId, voterId]) // un voto por regalo por persona
+  @@index([giftId])
+}

@@ -1,11 +1,25 @@
-import Image from "next/image";
+import { redirect } from "next/navigation";
+import { getCurrentVoter } from "@/lib/voter";
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ invalido?: string }>;
+}) {
+  const { invalido } = await searchParams;
+  if (!invalido && (await getCurrentVoter())) redirect("/votar");
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <h1>SOLANGE</h1>
-      </main>
-    </div>
+    <main className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+      <span className="text-5xl" aria-hidden>
+        🎁
+      </span>
+      <h1 className="text-2xl font-semibold">Votación de regalos</h1>
+      <p className="max-w-xs text-muted">
+        {invalido
+          ? "Este link de invitación no es válido. Pide uno nuevo a quien te lo envió."
+          : "Para votar necesitas abrir tu link de invitación."}
+      </p>
+    </main>
   );
 }

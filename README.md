@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Votación de regalos
 
-## Getting Started
+Next.js 16 + Prisma 7 (Neon) + Cloudflare R2. Cada persona vota los regalos de 1 a 5 estrellas usando su link de invitación.
 
-First, run the development server:
+## Rutas
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| Ruta | Qué hace |
+| --- | --- |
+| `/i/<token>` | Link de invitación: guarda el token en una cookie y redirige a `/votar`. Abrirlo de nuevo retoma la votación. |
+| `/votar` | Lista de regalos con carrusel, lightbox con zoom, estrellas y comentario opcional. Cada clic se guarda al instante. |
+| `/admin` | Panel protegido por contraseña: regalos (CRUD, imágenes, orden), links, votos y abrir/cerrar la votación. |
+
+## Puesta en marcha
+
+1. Copia `.env.example` a `.env` y completa los valores.
+2. `pnpm install` (genera el cliente de Prisma en `generated/prisma`).
+3. `pnpm db:migrate` para crear las tablas en Neon.
+4. `pnpm dev` y entra a `/admin`.
+
+### Neon
+
+- `DATABASE_URL`: connection string **pooled** (host con `-pooler`). La usa la app.
+- `DIRECT_URL`: connection string **directa**. La usa la CLI de Prisma para las migraciones.
+
+### Cloudflare R2
+
+1. Crea un bucket y habilita el acceso público (dominio `r2.dev` o uno propio) → `NEXT_PUBLIC_R2_PUBLIC_URL`.
+2. Crea un API token con permiso de lectura/escritura sobre el bucket → `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`.
+3. Configura CORS en el bucket para que el navegador pueda subir con la URL firmada:
+
+```json
+[
+  {
+    "AllowedOrigins": ["http://localhost:3000", "https://TU-DOMINIO.vercel.app"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["Content-Type"],
+    "MaxAgeSeconds": 3600
+  }
+]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Vercel
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Configura las mismas variables de entorno del `.env`. El `postinstall` genera el cliente de Prisma en cada deploy. Las migraciones se aplican con `pnpm db:deploy`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Notas
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Las estrellas (1..5) se validan en código (`app/votar/actions.ts`), no con un `CHECK` en la base.
+- Al borrar un regalo o una imagen solo se borra el registro; el archivo queda en R2.
+- `next/image` optimiza las imágenes de R2 (las sirve en WebP/AVIF y redimensionadas), por eso no se convierten al subirlas.
