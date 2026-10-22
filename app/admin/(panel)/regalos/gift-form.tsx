@@ -10,15 +10,18 @@ export type GiftFormValues = {
   price: string;
   link: string;
   isActive: boolean;
+  groupId: string;
 };
 
 export function GiftForm({
   action,
   initial,
+  groups,
   submitLabel,
 }: {
   action: (prev: GiftFormState, formData: FormData) => Promise<GiftFormState>;
-  initial?: GiftFormValues;
+  initial?: Partial<GiftFormValues>;
+  groups: { id: string; name: string }[];
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
@@ -28,6 +31,16 @@ export function GiftForm({
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Nombre *</span>
         <input name="name" required defaultValue={initial?.name} className="input" />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-sm font-medium">Grupo</span>
+        <select name="groupId" defaultValue={initial?.groupId ?? groups[0]?.id} className="input">
+          {groups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
+            </option>
+          ))}
+        </select>
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Descripción</span>

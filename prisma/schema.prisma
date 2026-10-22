@@ -17,27 +17,46 @@ model Poll {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  groups GiftGroup[]
   gifts  Gift[]
   voters Voter[]
+}
+
+// Grupo de regalos dentro de una votación (ej: Zapatillas, Mochilas, Joyería).
+model GiftGroup {
+  id        String   @id @default(cuid())
+  pollId    String
+  name      String
+  position  Int      @default(0) // orden de los grupos
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  poll  Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  gifts Gift[]
+
+  @@index([pollId, position])
 }
 
 model Gift {
   id          String   @id @default(cuid())
   pollId      String
+  groupId     String
   name        String
   description String?
   price       Decimal? @db.Decimal(10, 2) // solo visible en el admin
   link        String? // dónde comprarlo (opcional)
   isActive    Boolean  @default(true)
-  position    Int      @default(0) // orden en la página de votación
+  position    Int      @default(0) // orden dentro de su grupo
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   poll   Poll        @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  // Restrict: un grupo con regalos no se puede borrar (hay que moverlos antes).
+  group  GiftGroup   @relation(fields: [groupId], references: [id], onDelete: Restrict)
   images GiftImage[]
   votes  Vote[]
 
-  @@index([pollId, position])
+  @@index([groupId, position])
 }
 
 model GiftImage {

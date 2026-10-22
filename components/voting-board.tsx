@@ -15,20 +15,28 @@ export type VotingGift = {
   comment: string;
 };
 
+export type VotingGroup = {
+  id: string;
+  name: string;
+  gifts: VotingGift[];
+};
+
 export function VotingBoard({
   pollName,
   isOpen,
-  gifts,
+  groups,
 }: {
   pollName: string;
   isOpen: boolean;
-  gifts: VotingGift[];
+  groups: VotingGroup[];
 }) {
+  const gifts = groups.flatMap((group) => group.gifts);
   // Estrellas por regalo; se actualiza al instante y se guarda en segundo plano.
   const [stars, setStars] = useState<Record<string, number>>(() =>
     Object.fromEntries(gifts.map((g) => [g.id, g.stars])),
   );
-  const voted = gifts.filter((g) => stars[g.id] > 0).length;
+  const votedIn = (list: VotingGift[]) => list.filter((g) => stars[g.id] > 0).length;
+  const voted = votedIn(gifts);
   const progress = gifts.length ? (voted / gifts.length) * 100 : 0;
 
   return (
@@ -48,6 +56,27 @@ export function VotingBoard({
             </span>
           </div>
         )}
+        {groups.length > 1 && (
+          <nav className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 scrollbar-none">
+            {groups.map((group) => {
+              const done = votedIn(group.gifts) === group.gifts.length;
+              return (
+                <a
+                  key={group.id}
+                  href={`#grupo-${group.id}`}
+                  className={`shrink-0 rounded-full border px-3 py-1 text-sm whitespace-nowrap ${
+                    done ? "border-accent/60 bg-accent/10" : "border-border bg-card"
+                  }`}
+                >
+                  {group.name}{" "}
+                  <span className="tabular-nums text-muted">
+                    {votedIn(group.gifts)}/{group.gifts.length}
+                  </span>
+                </a>
+              );
+            })}
+          </nav>
+        )}
         {!isOpen && (
           <p className="mt-2 text-sm text-muted">
             La votación está cerrada. Ya no se pueden cambiar votos.
@@ -58,17 +87,25 @@ export function VotingBoard({
       {gifts.length === 0 ? (
         <p className="px-4 py-16 text-center text-muted">Todavía no hay regalos para votar.</p>
       ) : (
-        <ul className="flex flex-col gap-6 pt-4 sm:px-4">
-          {gifts.map((gift) => (
-            <GiftCard
-              key={gift.id}
-              gift={gift}
-              stars={stars[gift.id]}
-              disabled={!isOpen}
-              onStars={(value) => setStars((prev) => ({ ...prev, [gift.id]: value }))}
-            />
-          ))}
-        </ul>
+        groups.map((group) => (
+          // scroll-mt deja espacio para el header fijo al saltar desde los chips.
+          <section key={group.id} id={`grupo-${group.id}`} className="scroll-mt-32 pt-6">
+            {groups.length > 1 && (
+              <h2 className="px-4 pb-3 text-xl font-semibold">{group.name}</h2>
+            )}
+            <ul className="flex flex-col gap-6 sm:px-4">
+              {group.gifts.map((gift) => (
+                <GiftCard
+                  key={gift.id}
+                  gift={gift}
+                  stars={stars[gift.id]}
+                  disabled={!isOpen}
+                  onStars={(value) => setStars((prev) => ({ ...prev, [gift.id]: value }))}
+                />
+              ))}
+            </ul>
+          </section>
+        ))
       )}
 
       {gifts.length > 0 && voted === gifts.length && (

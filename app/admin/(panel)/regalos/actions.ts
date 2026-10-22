@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
 import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/lib/images";
 import { getCurrentPoll } from "@/lib/poll";
+import { reorder } from "@/lib/reorder";
 import { createPresignedPutUrl, putObject } from "@/lib/r2";
 
 export type GiftFormState = { error: string } | null;
@@ -21,15 +22,17 @@ type ParsedGift =
         price: string | null;
         link: string | null;
         isActive: boolean;
+        groupId: string;
       };
     };
 
-function parseGiftForm(formData: FormData): ParsedGift {
+async function parseGiftForm(formData: FormData): Promise<ParsedGift> {
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const priceRaw = String(formData.get("price") ?? "").trim().replace(",", ".");
   const link = String(formData.get("link") ?? "").trim();
   const isActive = formData.get("isActive") === "on";
+  const groupId = String(formData.get("groupId") ?? "");
 
   if (!name) return { error: "El nombre es obligatorio." };
   if (priceRaw && !/^\d{1,8}(\.\d{1,2})?$/.test(priceRaw)) {
@@ -39,6 +42,14 @@ function parseGiftForm(formData: FormData): ParsedGift {
     return { error: "El link debe empezar con http:// o https://" };
   }
 
+  // El grupo tiene que pertenecer a la votación actual.
+  const poll = await getCurrentPoll();
+  const group = await prisma.giftGroup.findFirst({
+    where: { id: groupId, pollId: poll.id },
+    select: { id: true },
+  });
+  if (!group) return { error: "Elige un grupo válido." };
+
   return {
     data: {
       name,
@@ -46,23 +57,32 @@ function parseGiftForm(formData: FormData): ParsedGift {
       price: priceRaw || null,
       link: link || null,
       isActive,
+      groupId: group.id,
     },
   };
 }
 
-export async function createGift(_prev: GiftFormState, formData: FormData): Promise<GiftFormState> {
-  await requireAdmin();
-  const parsed = parseGiftForm(formData);
-  if ("error" in parsed) return { error: parsed.error };
-
-  const poll = await getCurrentPoll();
+async function nextPositionInGroup(groupId: string) {
   const last = await prisma.gift.findFirst({
-    where: { pollId: poll.id },
+    where: { groupId },
     orderBy: { position: "desc" },
     select: { position: true },
   });
+  return (last?.position ?? -1) + 1;
+}
+
+export async function createGift(_prev: GiftFormState, formData: FormData): Promise<GiftFormState> {
+  await requireAdmin();
+  const parsed = await parseGiftForm(formData);
+  if ("error" in parsed) return { error: parsed.error };
+
+  const poll = await getCurrentPoll();
   const gift = await prisma.gift.create({
-    data: { ...parsed.data, pollId: poll.id, position: (last?.position ?? -1) + 1 },
+    data: {
+      ...parsed.data,
+      pollId: poll.id,
+      position: await nextPositionInGroup(parsed.data.groupId),
+    },
   });
 
   revalidatePath("/admin/regalos");
@@ -76,10 +96,20 @@ export async function updateGift(
   formData: FormData,
 ): Promise<GiftFormState> {
   await requireAdmin();
-  const parsed = parseGiftForm(formData);
+  const parsed = await parseGiftForm(formData);
   if ("error" in parsed) return { error: parsed.error };
 
-  await prisma.gift.update({ where: { id: giftId }, data: parsed.data });
+  const current = await prisma.gift.findUniqueOrThrow({
+    where: { id: giftId },
+    select: { groupId: true },
+  });
+  // Si cambia de grupo, queda al final del grupo nuevo.
+  const position =
+    current.groupId === parsed.data.groupId
+      ? undefined
+      : await nextPositionInGroup(parsed.data.groupId);
+
+  await prisma.gift.update({ where: { id: giftId }, data: { ...parsed.data, position } });
   revalidatePath("/admin/regalos");
   redirect("/admin/regalos");
 }
@@ -99,21 +129,12 @@ export async function toggleGift(giftId: string) {
   revalidatePath("/admin/regalos");
 }
 
-// Reescribe las posiciones 0..n-1 moviendo un elemento una posición arriba o abajo.
-function reorder<T extends { id: string }>(items: T[], id: string, direction: -1 | 1) {
-  const index = items.findIndex((item) => item.id === id);
-  const target = index + direction;
-  if (index < 0 || target < 0 || target >= items.length) return null;
-  const copy = [...items];
-  [copy[index], copy[target]] = [copy[target], copy[index]];
-  return copy;
-}
-
+// Mueve el regalo dentro de su grupo.
 export async function moveGift(giftId: string, direction: -1 | 1) {
   await requireAdmin();
   const gift = await prisma.gift.findUniqueOrThrow({ where: { id: giftId } });
   const gifts = await prisma.gift.findMany({
-    where: { pollId: gift.pollId },
+    where: { groupId: gift.groupId },
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],
     select: { id: true },
   });

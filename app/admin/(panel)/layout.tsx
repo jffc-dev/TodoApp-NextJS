@@ -7,6 +7,7 @@ export const metadata: Metadata = { title: "Admin · Votación de regalos" };
 
 const NAV = [
   { href: "/admin/regalos", label: "Regalos" },
+  { href: "/admin/grupos", label: "Grupos" },
   { href: "/admin/votantes", label: "Links" },
   { href: "/admin/votos", label: "Votos" },
   { href: "/admin/votacion", label: "Votación" },

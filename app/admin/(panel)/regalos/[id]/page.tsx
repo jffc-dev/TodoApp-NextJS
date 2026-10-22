@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { prisma } from "@/lib/db";
 import { imageUrl } from "@/lib/images";
+import { getPollGroups } from "@/lib/poll";
 import { deleteGift, updateGift } from "../actions";
 import { GiftForm } from "../gift-form";
 import { ImageManager } from "../image-manager";
@@ -16,6 +17,7 @@ export default async function EditGiftPage({ params }: { params: Promise<{ id: s
     include: { images: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] } },
   });
   if (!gift) notFound();
+  const groups = await getPollGroups(gift.pollId);
 
   return (
     <div className="flex flex-col gap-8">
@@ -30,6 +32,7 @@ export default async function EditGiftPage({ params }: { params: Promise<{ id: s
       <section>
         <GiftForm
           action={updateGift.bind(null, gift.id)}
+          groups={groups.map(({ id, name }) => ({ id, name }))}
           submitLabel="Guardar cambios"
           initial={{
             name: gift.name,
@@ -37,6 +40,7 @@ export default async function EditGiftPage({ params }: { params: Promise<{ id: s
             price: gift.price?.toString() ?? "",
             link: gift.link ?? "",
             isActive: gift.isActive,
+            groupId: gift.groupId,
           }}
         />
       </section>
