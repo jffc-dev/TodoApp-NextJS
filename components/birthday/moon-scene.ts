@@ -89,7 +89,7 @@ function trailTexture() {
 // ---- Pareja estilo Funko Pop ----
 // Colores de cada figura (basados en la foto de los dos).
 const LOOK = {
-  him: { skin: "#d9a07c", hair: "#1f140e", beard: "#2a1c14", shirt: "#f7f5f0", pants: "#1b1a1f", shoes: "#18171b", soles: "#d8d4cc" },
+  him: { skin: "#e6b593", hair: "#1f140e", beard: "#5a4234", shirt: "#f7f5f0", pants: "#1b1a1f", shoes: "#18171b", soles: "#d8d4cc" },
   her: {
     skin: "#e2a988",
     hairTop: "#1a110e",
@@ -311,8 +311,8 @@ function funkoHim(): Funko {
       [0.47, 0.42, 0.08],
     ].map(([x, y, z]) => new THREE.Vector3(x, y, z)),
   );
-  head.add(new THREE.Mesh(new THREE.TubeGeometry(jaw, 48, 0.06, 8), beard));
-  head.add(ball(beard, [0, 0.1, 0.38], [0.17, 0.08, 0.055]));
+  head.add(new THREE.Mesh(new THREE.TubeGeometry(jaw, 48, 0.035, 8), beard));
+  head.add(ball(beard, [0, 0.095, 0.375], [0.12, 0.05, 0.04]));
 
   head.add(sunglasses("square", "#0c0b0e", "#0c0b0e"));
   body.add(head);
