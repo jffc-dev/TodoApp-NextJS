@@ -1,6 +1,9 @@
-# Votación de regalos
+# Web multiusos
 
-Next.js 16 + Prisma 7 (Neon) + Cloudflare R2. Cada persona vota los regalos de 1 a 5 estrellas usando su link de invitación.
+Next.js 16 + Prisma 7 (Neon) + Cloudflare R2. Cada sección vive en su propio route group de `app/`:
+
+- `app/(votacion)`: votación de regalos. Cada persona vota de 1 a 5 estrellas con su link de invitación.
+- `app/(cumple)`: saludo de cumpleaños en formato "historias", pensado para móvil.
 
 ## Rutas
 
@@ -9,6 +12,19 @@ Next.js 16 + Prisma 7 (Neon) + Cloudflare R2. Cada persona vota los regalos de 1
 | `/i/<token>` | Link de invitación: guarda el token en una cookie y redirige a `/votar`. Abrirlo de nuevo retoma la votación. |
 | `/votar` | Lista de regalos con carrusel, lightbox con zoom, estrellas y comentario opcional. Cada clic se guarda al instante. |
 | `/admin` | Panel protegido por contraseña: regalos (CRUD, imágenes, orden), links, votos y abrir/cerrar la votación. |
+| `/c/<BIRTHDAY_ACCESS_KEY>` | Saludo de cumpleaños: sobre animado → tarjetas del mensaje → escena 3D de la luna → pastel → cupón de beso. Una clave incorrecta da 404. |
+
+## Saludo de cumpleaños
+
+Todo el contenido sale de env vars (ver `.env.example`), nada queda en el código:
+
+- `BIRTHDAY_MESSAGE`: el mensaje completo; `||` separa una tarjeta de la siguiente.
+- `BIRTHDAY_PHOTOS`: keys de R2 (o URLs) separadas por coma, en el orden de las tarjetas. Una entrada vacía (`a.jpg,,c.jpg`) deja esa tarjeta sin foto.
+- `BIRTHDAY_SONG`: MP3 en R2. Empieza al tocar el sobre (los navegadores no permiten audio sin un toque previo).
+- `BIRTHDAY_MOON_PHRASE` / `BIRTHDAY_COUPON`: si se omiten, no se muestran la escena de la luna o el cupón.
+- `BIRTHDAY_AGE`: las velas del pastel toman la forma de esos números.
+
+Las velas se apagan tocándolas o soplando al micrófono (requiere HTTPS, que Vercel ya da). Al cambiar una env var en Vercel hay que volver a desplegar.
 
 ## Puesta en marcha
 

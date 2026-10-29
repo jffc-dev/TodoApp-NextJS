@@ -12,9 +12,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Layout neutro: cada sección (route group) define su propio título y estilo.
 export const metadata: Metadata = {
-  title: "Votación de regalos",
-  description: "Vota por tus regalos favoritos",
   robots: { index: false, follow: false },
 };
 

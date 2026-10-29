@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveComment, saveVote } from "@/app/votar/actions";
+import { saveComment, saveVote } from "@/app/(votacion)/votar/actions";
 import { GiftGallery, type GalleryImage } from "@/components/gift-gallery";
 import { StarRating } from "@/components/star-rating";
 
