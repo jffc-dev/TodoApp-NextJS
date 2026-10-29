@@ -531,13 +531,18 @@ const envelope = (x: number, a: number, b: number, c: number, d: number) => smoo
 
 function hill(points: Point[], material: THREE.Material) {
   const shape = new THREE.Shape();
-  shape.moveTo(-14, -14);
-  shape.lineTo(...points[0]);
+  // Se extiende de lado a lado para que no se vea el borde en pantallas anchas
+  const first = points[0];
+  const last = points[points.length - 1];
+  shape.moveTo(-60, -14);
+  shape.lineTo(-60, first[1]);
+  shape.lineTo(...first);
   for (let i = 1; i + 2 < points.length; i += 3) {
     const [c1, c2, end] = [points[i], points[i + 1], points[i + 2]];
     shape.bezierCurveTo(c1[0], c1[1], c2[0], c2[1], end[0], end[1]);
   }
-  shape.lineTo(14, -14);
+  shape.lineTo(60, last[1]);
+  shape.lineTo(60, -14);
   shape.closePath();
   return new THREE.Mesh(new THREE.ShapeGeometry(shape, 24), material);
 }
@@ -718,12 +723,16 @@ export function createMoonScene(container: HTMLElement, { reducedMotion }: { red
   }
   window.addEventListener("pointermove", onPointerMove);
 
+  let lookY = 0;
   function resize() {
     const { clientWidth: w, clientHeight: h } = container;
     if (!w || !h) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    // En pantallas verticales la cámara mira un poco más arriba: la escena baja,
+    // la tierra ocupa menos y la frase de arriba no se monta sobre la luna.
+    lookY = camera.aspect < 0.8 ? 2.6 : 0;
   }
   const observer = new ResizeObserver(resize);
   observer.observe(container);
@@ -746,7 +755,7 @@ export function createMoonScene(container: HTMLElement, { reducedMotion }: { red
       camera.position.x += (Math.sin(t * 0.15) * 0.3 + pointer.x * 0.45 - camera.position.x) * 0.04;
       camera.position.y += (0.3 - pointer.y * 0.25 - camera.position.y) * 0.04;
     }
-    camera.lookAt(0, 0, -10);
+    camera.lookAt(0, lookY, -10);
     moonMesh.rotation.y = t * 0.02;
 
     // Coreografía en bucle: se miran → beso con pie arriba → vuelven al frente
