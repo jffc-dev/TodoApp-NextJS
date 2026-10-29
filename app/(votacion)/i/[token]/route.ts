@@ -12,7 +12,7 @@ export async function GET(
   const voter = await prisma.voter.findUnique({ where: { token }, select: { id: true } });
 
   if (!voter) {
-    return NextResponse.redirect(new URL("/?invalido=1", request.url));
+    return NextResponse.redirect(new URL("/votar?invalido=1", request.url));
   }
 
   const response = NextResponse.redirect(new URL("/votar", request.url));

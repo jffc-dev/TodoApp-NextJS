@@ -6,14 +6,26 @@ import { VotingBoard, type VotingGroup } from "@/components/voting-board";
 
 export const metadata: Metadata = { title: "Votar · Votación de regalos" };
 
-export default async function VotarPage() {
-  const voter = await getCurrentVoter();
+export default async function VotarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ invalido?: string }>;
+}) {
+  const { invalido } = await searchParams;
+  const voter = invalido ? null : await getCurrentVoter();
 
   if (!voter) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-        <h1 className="text-xl font-semibold">Necesitas tu link de invitación</h1>
-        <p className="max-w-xs text-muted">Abre el link que te enviaron para poder votar.</p>
+      <main className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+        <span className="text-5xl" aria-hidden>
+          🎁
+        </span>
+        <h1 className="text-xl font-semibold">Votación de regalos</h1>
+        <p className="max-w-xs text-muted">
+          {invalido
+            ? "Este link de invitación no es válido. Pide uno nuevo a quien te lo envió."
+            : "Para votar necesitas abrir tu link de invitación."}
+        </p>
       </main>
     );
   }

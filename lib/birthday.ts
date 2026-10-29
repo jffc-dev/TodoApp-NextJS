@@ -1,4 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { cookies } from "next/headers";
 import { imageUrl } from "@/lib/images";
 
 // Contenido del saludo de cumpleaños. Todo sale de env vars (solo servidor, sin NEXT_PUBLIC_),
@@ -11,7 +12,7 @@ const VIDEO_EXT = /\.(mp4|webm|mov|m4v)$/i;
 export type BirthdayContent = {
   to: string | null;
   title: string;
-  cards: { text: string; photo: BirthdayMedia | null }[];
+  cards: { text: string; photo: BirthdayMedia | null; textTop: boolean }[];
   song: string | null;
   songTitle: string | null;
   age: string | null;
@@ -41,24 +42,58 @@ function media(value: string | null): BirthdayMedia | null {
   return { src: value, optimize: !!r2 && value.startsWith(`${r2}/`), video };
 }
 
-function sameKey(a: string, b: string) {
-  const left = Buffer.from(a);
-  const right = Buffer.from(b);
-  return left.length === right.length && timingSafeEqual(left, right);
+// ---- Contraseña ----
+// Se pide en un input (no en la URL). Al acertar se guarda una cookie con un hash de la
+// contraseña: si se cambia BIRTHDAY_PASSWORD, las sesiones anteriores dejan de valer.
+
+export const BIRTHDAY_COOKIE = "bday_session";
+export const BIRTHDAY_SESSION_MAX_AGE = 60 * 60 * 24 * 365;
+
+// Sin distinguir mayúsculas ni espacios extra: el teclado del celular suele poner la 1ª en mayúscula.
+function normalize(password: string) {
+  return password.trim().toLowerCase();
 }
 
-export function getBirthday(key: string): BirthdayContent | null {
-  const expected = env("BIRTHDAY_ACCESS_KEY");
+function hash(value: string) {
+  return createHash("sha256").update(value).digest();
+}
+
+function sessionValue(password: string) {
+  return hash(`birthday:${normalize(password)}`).toString("base64url");
+}
+
+export function checkBirthdayPassword(input: string) {
+  const expected = env("BIRTHDAY_PASSWORD");
+  if (!expected) return false;
+  return timingSafeEqual(hash(normalize(input)), hash(normalize(expected)));
+}
+
+export function createBirthdaySessionValue() {
+  return sessionValue(env("BIRTHDAY_PASSWORD") ?? "");
+}
+
+export async function isBirthdayUnlocked() {
+  const expected = env("BIRTHDAY_PASSWORD");
+  const value = (await cookies()).get(BIRTHDAY_COOKIE)?.value;
+  if (!expected || !value) return false;
+  return timingSafeEqual(hash(value), hash(sessionValue(expected)));
+}
+
+// ---- Contenido ----
+
+export function getBirthday(): BirthdayContent | null {
   const message = env("BIRTHDAY_MESSAGE");
-  if (!expected || !message || !sameKey(key, expected)) return null;
+  if (!message) return null;
 
   // Las fotos van por posición: la 1ª foto es de la 1ª tarjeta. Una entrada vacía = tarjeta sin foto.
   const photos = (env("BIRTHDAY_PHOTOS") ?? "").split(",").map((p) => p.trim());
+  // Números de tarjeta (desde 1) que llevan el texto arriba en vez de abajo, ej: "7" o "3,7".
+  const textTop = new Set((env("BIRTHDAY_TEXT_TOP") ?? "").split(",").map((n) => Number(n.trim())));
   const cards = message
     .split(CARD_SEPARATOR)
     .map((text) => text.trim())
     .filter(Boolean)
-    .map((text, i) => ({ text, photo: media(photos[i] || null) }));
+    .map((text, i) => ({ text, photo: media(photos[i] || null), textTop: textTop.has(i + 1) }));
 
   return {
     to: env("BIRTHDAY_TO"),

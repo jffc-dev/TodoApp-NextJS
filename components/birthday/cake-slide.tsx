@@ -38,7 +38,7 @@ function Flame({ lit }: { lit: boolean }) {
 }
 
 function celebrate() {
-  const heart = confetti.shapeFromText({ text: "❤️", scalar: 2 });
+  const heart = confetti.shapeFromText({ text: "💙", scalar: 2 });
   const shoot = (origin: { x: number; y: number }, angle: number) =>
     confetti({
       particleCount: 60,
@@ -46,7 +46,7 @@ function celebrate() {
       angle,
       origin,
       startVelocity: 45,
-      colors: ["#ff8fb1", "#ffd1dc", "#ffe08a", "#ffffff"],
+      colors: ["#7dd3fc", "#bae6fd", "#60a5fa", "#ffe08a", "#ffffff"],
       zIndex: 60,
       disableForReducedMotion: true,
     });
@@ -133,7 +133,7 @@ export function CakeSlide({ title, age }: { title: string; age: string | null })
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6 pt-16 pb-10 text-center">
       <motion.h2
-        className="font-script text-5xl leading-tight text-rose-50 drop-shadow-[0_0_20px_rgba(255,150,190,0.5)]"
+        className="font-script text-5xl leading-tight text-sky-50 drop-shadow-[0_0_20px_rgba(125,200,255,0.5)]"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: lit ? 1 : [1, 1.12, 1] }}
         transition={{ duration: 0.8 }}
@@ -160,14 +160,14 @@ export function CakeSlide({ title, age }: { title: string; age: string | null })
             digit ? (
               <div key={i} className="relative">
                 <Flame lit={lit} />
-                <span className="block bg-[repeating-linear-gradient(135deg,#fff_0_8px,#ff8fb1_8px_16px)] bg-clip-text font-serif text-8xl leading-none font-bold text-transparent [-webkit-text-stroke:2px_#fff0f5]">
+                <span className="block bg-[repeating-linear-gradient(135deg,#fff_0_8px,#60a5fa_8px_16px)] bg-clip-text font-serif text-8xl leading-none font-bold text-transparent [-webkit-text-stroke:2px_#eff6ff]">
                   {digit}
                 </span>
               </div>
             ) : (
               <div
                 key={i}
-                className="relative h-16 w-3.5 rounded-sm bg-[repeating-linear-gradient(135deg,#fff_0_6px,#ff8fb1_6px_12px)]"
+                className="relative h-16 w-3.5 rounded-sm bg-[repeating-linear-gradient(135deg,#fff_0_6px,#60a5fa_6px_12px)]"
               >
                 <Flame lit={lit} />
               </div>
@@ -177,14 +177,14 @@ export function CakeSlide({ title, age }: { title: string; age: string | null })
 
         {/* Pastel */}
         <svg viewBox="0 0 260 170" className="w-64" aria-hidden>
-          <ellipse cx="130" cy="158" rx="125" ry="10" fill="#f5e6ee" opacity="0.9" />
-          <rect x="22" y="78" width="216" height="78" rx="14" fill="#f9a8c4" />
-          <path d="M22 92 q0 -14 14 -14 h188 q14 0 14 14 v6 q-9 14 -18 0 q-9 16 -20 0 q-10 18 -22 0 q-10 14 -21 0 q-11 18 -22 0 q-10 14 -21 0 q-11 18 -22 0 q-10 14 -21 0 q-10 16 -20 0 q-9 14 -18 0 z" fill="#fff4f8" />
-          <rect x="52" y="22" width="156" height="60" rx="12" fill="#f472a6" />
-          <path d="M52 34 q0 -12 12 -12 h132 q12 0 12 12 v4 q-8 12 -16 0 q-9 14 -19 0 q-10 16 -21 0 q-10 12 -20 0 q-10 16 -21 0 q-9 12 -19 0 q-8 14 -16 0 z" fill="#fff4f8" />
+          <ellipse cx="130" cy="158" rx="125" ry="10" fill="#dbeafe" opacity="0.9" />
+          <rect x="22" y="78" width="216" height="78" rx="14" fill="#93c5fd" />
+          <path d="M22 92 q0 -14 14 -14 h188 q14 0 14 14 v6 q-9 14 -18 0 q-9 16 -20 0 q-10 18 -22 0 q-10 14 -21 0 q-11 18 -22 0 q-10 14 -21 0 q-11 18 -22 0 q-10 14 -21 0 q-10 16 -20 0 q-9 14 -18 0 z" fill="#f8fbff" />
+          <rect x="52" y="22" width="156" height="60" rx="12" fill="#60a5fa" />
+          <path d="M52 34 q0 -12 12 -12 h132 q12 0 12 12 v4 q-8 12 -16 0 q-9 14 -19 0 q-10 16 -21 0 q-10 12 -20 0 q-10 16 -21 0 q-9 12 -19 0 q-8 14 -16 0 z" fill="#f8fbff" />
           {[[70, 60], [100, 68], [135, 58], [165, 66], [190, 56], [45, 125], [80, 135], [118, 122], [150, 138], [185, 126], [215, 134]].map(
             ([x, y], i) => (
-              <text key={i} x={x} y={y} fontSize="12" fill={i % 2 ? "#fff" : "#be185d"} textAnchor="middle">
+              <text key={i} x={x} y={y} fontSize="12" fill={i % 2 ? "#fff" : "#1d4ed8"} textAnchor="middle">
                 ♥
               </text>
             ),
@@ -196,13 +196,13 @@ export function CakeSlide({ title, age }: { title: string; age: string | null })
         <AnimatePresence mode="wait">
           {lit ? (
             <motion.div key="hint" className="flex flex-col items-center gap-3" exit={{ opacity: 0 }}>
-              <p className="font-serif text-rose-100/90">Pide un deseo y toca las velas ✨</p>
+              <p className="font-serif text-sky-100/90">Pide un deseo y toca las velas ✨</p>
               {mic.state !== "denied" && (
                 <button
                   type="button"
                   onClick={mic.start}
                   disabled={mic.state === "listening"}
-                  className="rounded-full bg-white/10 px-4 py-2 font-serif text-sm text-rose-50 ring-1 ring-white/25 backdrop-blur disabled:opacity-80"
+                  className="rounded-full bg-white/10 px-4 py-2 font-serif text-sm text-sky-50 ring-1 ring-white/25 backdrop-blur disabled:opacity-80"
                 >
                   {mic.state === "listening" ? "🎤 Sopla fuerte…" : "🎤 O sopla al micrófono"}
                 </button>
@@ -211,7 +211,7 @@ export function CakeSlide({ title, age }: { title: string; age: string | null })
           ) : (
             <motion.p
               key="done"
-              className="font-script text-3xl text-rose-50"
+              className="font-script text-3xl text-sky-50"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}

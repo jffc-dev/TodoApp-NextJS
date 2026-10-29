@@ -21,12 +21,12 @@ export function MoonSlide({ phrase }: { phrase: string }) {
   }, [reducedMotion]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-linear-to-b from-[#070314] via-[#1b0b2e] to-[#3a1430]">
+    <div className="absolute inset-0 overflow-hidden bg-linear-to-b from-[#020617] via-[#0b1e47] to-[#173a73]">
       <div ref={sceneRef} className="absolute inset-0" />
 
       <div className="pointer-events-none relative flex h-full flex-col items-center px-8 pt-24 text-center">
         <motion.p
-          className="font-script text-4xl leading-tight text-rose-50 drop-shadow-[0_0_18px_rgba(255,190,210,0.6)]"
+          className="font-script text-4xl leading-tight text-sky-50 drop-shadow-[0_0_18px_rgba(160,210,255,0.65)]"
           initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ delay: 2.2, duration: 1.6, ease: "easeOut" }}

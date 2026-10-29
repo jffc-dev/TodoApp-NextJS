@@ -12,7 +12,7 @@ export function FloatingHearts({ count = 14 }: { count?: number }) {
         return (
           <span
             key={i}
-            className="bday-motion absolute -bottom-10 text-rose-300"
+            className="bday-motion absolute -bottom-10 text-sky-300"
             style={
               {
                 left: `${left}%`,

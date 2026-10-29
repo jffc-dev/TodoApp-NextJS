@@ -5,7 +5,7 @@ const dancing = Dancing_Script({ variable: "--font-dancing", subsets: ["latin"] 
 const lora = Lora({ variable: "--font-lora", subsets: ["latin"], style: ["normal", "italic"] });
 
 export const viewport: Viewport = {
-  themeColor: "#2a0a18",
+  themeColor: "#06142e",
   viewportFit: "cover",
 };
 

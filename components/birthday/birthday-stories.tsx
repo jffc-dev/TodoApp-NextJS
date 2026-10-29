@@ -13,12 +13,13 @@ import { KissSlide } from "./kiss-slide";
 import { SongBadge } from "./song-badge";
 
 type Slide =
-  | { kind: "message"; text: string; photo: BirthdayMedia | null }
+  | { kind: "message"; text: string; photo: BirthdayMedia | null; textTop: boolean }
   | { kind: "moon"; phrase: string }
   | { kind: "cake" }
   | { kind: "kiss"; coupon: string };
 
 const SWIPE_PX = 50;
+const HOLD_MS = 250;
 const MUSIC_VOLUME = 0.7;
 
 const slideVariants = {
@@ -42,7 +43,10 @@ export function BirthdayStories({ content }: { content: BirthdayContent }) {
   const [[index, direction], setPage] = useState<[number, number]>([0, 0]);
   const [muted, setMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null);
+  const holdTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Mantener presionado oculta el texto para ver la foto completa (como pausar una story).
+  const [holding, setHolding] = useState(false);
 
   const go = useCallback(
     (delta: number) =>
@@ -86,18 +90,26 @@ export function BirthdayStories({ content }: { content: BirthdayContent }) {
   }
 
   function onPointerDown(e: React.PointerEvent) {
-    pointerStart.current = { x: e.clientX, y: e.clientY };
+    pointerStart.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+    if ((e.target as HTMLElement).closest("[data-interactive]")) return;
+    holdTimer.current = setTimeout(() => setHolding(true), HOLD_MS);
+  }
+
+  function endHold() {
+    clearTimeout(holdTimer.current);
+    setHolding(false);
   }
 
   function onPointerUp(e: React.PointerEvent) {
     const start = pointerStart.current;
     pointerStart.current = null;
+    endHold();
     if (!start || (e.target as HTMLElement).closest("[data-interactive]")) return;
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
     if (Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(dy)) {
       go(dx < 0 ? 1 : -1);
-    } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+    } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && Date.now() - start.time < HOLD_MS) {
       go(e.clientX < window.innerWidth * 0.3 ? -1 : 1);
     }
   }
@@ -107,7 +119,7 @@ export function BirthdayStories({ content }: { content: BirthdayContent }) {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="fixed inset-0 touch-manipulation overflow-hidden overscroll-none bg-linear-to-b from-[#2a0a18] via-[#4a1030] to-[#2a0a18] select-none">
+      <div className="fixed inset-0 touch-manipulation overflow-hidden overscroll-none [-webkit-touch-callout:none] bg-linear-to-b from-[#06142e] via-[#0d2b5c] to-[#06142e] select-none">
         <FloatingHearts />
         {content.song && <audio ref={audioRef} src={content.song} loop preload="auto" />}
 
@@ -129,6 +141,8 @@ export function BirthdayStories({ content }: { content: BirthdayContent }) {
               transition={{ duration: 0.6 }}
               onPointerDown={onPointerDown}
               onPointerUp={onPointerUp}
+              onPointerCancel={endHold}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <AnimatePresence initial={false} custom={direction}>
                 <motion.div
@@ -142,7 +156,7 @@ export function BirthdayStories({ content }: { content: BirthdayContent }) {
                   transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                 >
                   {slide.kind === "message" && (
-                    <MessageSlide text={slide.text} photo={slide.photo} showHint={index === 0} />
+                    <MessageSlide text={slide.text} photo={slide.photo} textTop={slide.textTop} showHint={index === 0} hideText={holding} />
                   )}
                   {slide.kind === "moon" && <MoonSlide phrase={slide.phrase} />}
                   {slide.kind === "cake" && <CakeSlide title={content.title} age={content.age} />}
